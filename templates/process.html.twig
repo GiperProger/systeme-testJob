@@ -1,0 +1,34 @@
+{% extends "base.html.twig" %}
+
+{% block body %}
+
+<div id='error_block' class='error_block'></div>
+<div id='payment_info_block' class='payment_ifno_block'></div>
+
+{{ form_start(calculateForm) }}
+  <div class='form-group'>
+    {{ form_widget(calculateForm.product, {attr: {class: 'form-field-select'}}) }}
+  </div>
+  <div class='form-group'>
+    {{ form_widget(calculateForm.tax_number, {attr: {class: 'form-field'}}) }}
+  </div>
+  <div class='form-group'>
+    {{ form_widget(calculateForm.coupon_code, {attr: {class: 'form-field'}}) }}
+  </div>
+  <div class='form-group'>
+    {{ form_widget(calculateForm.payment_processor, {attr: {class: 'form-field-select'}}) }}
+  </div>
+
+  <div class='form-group'>
+    <button type="submit" class="form-field-button">Calculate</button>
+  </div>
+  <div class='form-group'>
+    <button id="pay_btn" type="button"  class="form-field-button-pay">Pay</button>
+  </div>
+
+  {{ form_end(calculateForm) }}
+
+ 
+{% endblock %}
+
+

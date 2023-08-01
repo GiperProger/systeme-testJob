@@ -1,0 +1,160 @@
+<?php
+
+namespace App\ApiObjects;
+
+use App\Entity\Coupon;
+use App\Entity\CouponType;
+use App\Entity\PaymentProcessor;
+use App\Entity\Product;
+use App\Entity\Tax;
+use InvalidArgumentException;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Mapping\ClassMetadata;
+
+
+class CalculateObject
+{
+    private ?Product $product;
+    private ?Tax $tax;
+    private ?Coupon $coupon;
+    private ?PaymentProcessor $paymentProcessor;
+
+    /**
+     * Get the value of taxNumber
+     *
+     * @return Tax
+     */
+    public function getTax(): Tax
+    {
+        return $this->tax;
+    }
+
+    /**
+     * Set the value of tax
+     *
+     * @param string $tax
+     *
+     * @return self
+     */
+    public function setTax(?Tax $tax): self
+    {
+        $this->tax = $tax;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of couponCode
+     *
+     * @return Coupon
+     */
+    public function getCoupon(): Coupon
+    {
+        return $this->coupon;
+    }
+
+    /**
+     * Set the value of couponCode
+     *
+     * @param Coupon $coupon
+     *
+     * @return self
+     */
+    public function setCoupon(?Coupon $coupon): self
+    {
+        $this->coupon = $coupon;
+
+        return $this;
+    }
+
+    /**
+     * Get total price based on product price, coupon code and tax number
+     *
+     * @param Coupon $coupon
+     *
+     * @return array
+     */
+    public function getPaymentData(): array
+    {
+        $discountPrice = $this->checkDiscount($this->product->getPrice());
+        $totalPrice = $discountPrice + $discountPrice / 100 * $this->tax->getPercent();
+        $hash = bin2hex(random_bytes(10));
+
+        return ['totalPrice' => $totalPrice, 'hash' => $hash];
+    }
+
+    /**
+     * Get the value of product
+     *
+     * @return ?Product
+     */
+    public function getProduct(): ?Product
+    {
+        return $this->product;
+    }
+
+    /**
+     * Set the value of product
+     *
+     * @param ?Product $product
+     *
+     * @return self
+     */
+    public function setProduct(?Product $product): self
+    {
+        $this->product = $product;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of paymentProcessor
+     *
+     * @return ?PaymentProcessor
+     */
+    public function getPaymentProcessor(): ?PaymentProcessor
+    {
+        return $this->paymentProcessor;
+    }
+
+    /**
+     * Set the value of paymentProcessor
+     *
+     * @param ?PaymentProcessor $paymentProcessor
+     *
+     * @return self
+     */
+    public function setPaymentProcessor(?PaymentProcessor $paymentProcessor): self
+    {
+        $this->paymentProcessor = $paymentProcessor;
+
+        return $this;
+    }
+
+    public static function loadValidatorMetadata(ClassMetadata $metadata): void
+    {
+        $metadata->addPropertyConstraint('tax', new NotBlank([], "Tax number is incorrect. Please check it and try again"));
+        $metadata->addPropertyConstraint('product', new NotBlank([], "The product you are tryuing to buy was not found."));
+        $metadata->addPropertyConstraint('paymentProcessor', new NotBlank([], "Payment processor was not found."));
+
+    }
+
+    private function checkDiscount($price) : int {
+        if($this->coupon === null){
+            return $price;
+        }
+
+        switch($this->coupon->getType()->getname()){
+            case CouponType::TYPE_CONST;
+                if($price <= $this->coupon->getDiscountValue()){
+                    throw new InvalidArgumentException("Discount value can not be bigger that the price");
+                }
+                return $price - $this->coupon->getDiscountValue();
+            case CouponType::TYPE_PERCENT;
+                return $price - $price / 100 * $this->coupon->getDiscountValue();
+        }
+
+        throw new InvalidArgumentException("Invalid coupon type");
+    }
+
+}
