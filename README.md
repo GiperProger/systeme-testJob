@@ -1,5 +1,3 @@
-# 🐳 Docker + PHP 8.2 + MySQL + Nginx + Symfony 6.2 Boilerplate
-
 ## Description
 
 Test job for systeme company. Senior PHP developer position
