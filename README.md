@@ -12,11 +12,13 @@ Test job for systeme company. Senior PHP developer position
 
 4. Go inside folder `./docker` and run `docker compose up -d` to start containers.
 
+5. Run `docker container exec -it  systeme_test_job-php-1 composer install`
 
-6. Inside the `php` container, run `composer install` to install dependencies from `/var/www/symfony` folder.
-   Run `docker exec  systeme_test_job-php-1 composer install`
+6. Run `docker container exec -it  systeme_test_job-php-1 php bin/console doctrine:migrations:migrate`
 
-7. Use the following value for the DATABASE_URL environment variable:
+7. Run `docker container exec -it  systeme_test_job-php-1 php bin/console doctrine:fixtures:load`
+
+8. Use the following value for the DATABASE_URL environment variable:
 
 ```
 DATABASE_URL=mysql://systeme_user:systeme_pass@db:3306/systeme?serverVersion=8.0.33

@@ -12,7 +12,6 @@ use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 class CouponFixtures extends Fixture implements DependentFixtureInterface
 {
     const COUPON_CODES = ['d15r1','d15r2','d15r3','d15r4','d15r5','d15r6','d15r7','d15r8','d15r9'];
-    
 
     public function load(ObjectManager $manager): void
     {

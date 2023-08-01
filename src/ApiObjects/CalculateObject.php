@@ -7,6 +7,7 @@ use App\Entity\CouponType;
 use App\Entity\PaymentProcessor;
 use App\Entity\Product;
 use App\Entity\Tax;
+use Exception;
 use InvalidArgumentException;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
@@ -14,9 +15,16 @@ use Symfony\Component\Validator\Mapping\ClassMetadata;
 
 class CalculateObject
 {
+    /** @var Product|null  */
     private ?Product $product;
+
+    /** @var Tax|null  */
     private ?Tax $tax;
+
+    /** @var Coupon|null  */
     private ?Coupon $coupon;
+
+    /** @var PaymentProcessor|null  */
     private ?PaymentProcessor $paymentProcessor;
 
     /**
@@ -56,7 +64,7 @@ class CalculateObject
     /**
      * Set the value of couponCode
      *
-     * @param Coupon $coupon
+     * @param Coupon|null $coupon
      *
      * @return self
      */
@@ -70,9 +78,8 @@ class CalculateObject
     /**
      * Get total price based on product price, coupon code and tax number
      *
-     * @param Coupon $coupon
-     *
      * @return array
+     * @throws Exception
      */
     public function getPaymentData(): array
     {
@@ -131,6 +138,10 @@ class CalculateObject
         return $this;
     }
 
+    /**
+     * @param ClassMetadata $metadata
+     * @return void
+     */
     public static function loadValidatorMetadata(ClassMetadata $metadata): void
     {
         $metadata->addPropertyConstraint('tax', new NotBlank([], "Tax number is incorrect. Please check it and try again"));
@@ -139,14 +150,19 @@ class CalculateObject
 
     }
 
-    private function checkDiscount($price) : int {
-        if($this->coupon === null){
+    /**
+     * @param $price
+     * @return int
+     */
+    private function checkDiscount($price): int
+    {
+        if ($this->coupon === null) {
             return $price;
         }
 
-        switch($this->coupon->getType()->getname()){
+        switch ($this->coupon->getType()->getname()) {
             case CouponType::TYPE_CONST;
-                if($price <= $this->coupon->getDiscountValue()){
+                if ($price <= $this->coupon->getDiscountValue()) {
                     throw new InvalidArgumentException("Discount value can not be bigger that the price");
                 }
                 return $price - $this->coupon->getDiscountValue();

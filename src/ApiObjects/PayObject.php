@@ -10,7 +10,13 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class PayObject
 {
+    /**
+     * @var PaymentHash|null
+     */
     private ?PaymentHash $paymentHash;
+    /**
+     * @var Float|null
+     */
     private ?Float $userPrice;
 
     /**
@@ -61,6 +67,10 @@ class PayObject
         return $this;
     }
 
+    /**
+     * @param ClassMetadata $metadata
+     * @return void
+     */
     public static function loadValidatorMetadata(ClassMetadata $metadata): void
     {
         $callback = function (PayObject $payObject, ExecutionContextInterface $context, mixed $payload): void {
