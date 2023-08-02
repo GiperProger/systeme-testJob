@@ -10,11 +10,17 @@ Test job for systeme company. Senior PHP developer position
 
 4. Go inside folder `./docker` and run `docker compose up -d` to start containers.
 
-5. Run `docker container exec -it  systeme_test_job-php-1 composer install`
+5. Run `docker exec -it systeme_test_job-php-1 bash`
 
-6. Run `docker container exec -it  systeme_test_job-php-1 php bin/console doctrine:migrations:migrate`
+6. Run `composer install`
 
-7. Run `docker container exec -it  systeme_test_job-php-1 php bin/console doctrine:fixtures:load`
+6. Run `php bin/console doctrine:migrations:migrate`
+
+7. Run `php bin/console doctrine:fixtures:load`
+
+8. Run `npm install`
+
+9. Run `npm run watch`
 
 8. Use the following value for the DATABASE_URL environment variable:
 
