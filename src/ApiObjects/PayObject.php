@@ -3,12 +3,13 @@
 namespace App\ApiObjects;
 
 use App\Entity\PaymentHash;
+use App\Interfaces\ApiObjects\PayInterface;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 use Symfony\Component\Validator\Constraints as Assert;
 
 
-class PayObject
+class PayObject implements PayInterface
 {
     /**
      * @var PaymentHash|null

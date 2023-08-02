@@ -30,7 +30,8 @@ class ApiController extends AbstractController
     public function calculate(
         Request                $request,
         EntityManagerInterface $entityManager,
-        TaxFormatConverter     $taxFormatConverter
+        TaxFormatConverter     $taxFormatConverter,
+        CalculateObject        $calculateObj
     ): Response
     {
 
@@ -51,7 +52,6 @@ class ApiController extends AbstractController
         $taxTemplate = $taxFormatConverter->convertRealTaxToTemplate($postParams['taxNumber'] ?? null);
         $taxEntity = $entityManager->getRepository(Tax::class)->findByTemplate($taxTemplate);
 
-        $calculateObj = new CalculateObject();
         $calculateObj->setProduct($productEntity);
         $calculateObj->setCoupon($couponEntity);
         $calculateObj->setTax($taxEntity);
@@ -100,7 +100,8 @@ class ApiController extends AbstractController
     public function pay(
         Request                    $request,
         EntityManagerInterface     $entityManager,
-        PaymentProcessorAggregator $paymentProcessorAggregator): Response
+        PaymentProcessorAggregator $paymentProcessorAggregator,
+        PayObject                  $payObj ): Response
     {
         $postParams = json_decode($request->getContent(), true);
 
@@ -109,7 +110,6 @@ class ApiController extends AbstractController
 
         $paymentHashEntity = $entityManager->getRepository(PaymentHash::class)->findByHash($paymentHash);
 
-        $payObj = new PayObject();
         $payObj->setPaymentHash($paymentHashEntity);
         $payObj->setUserPrice($userPrice);
 

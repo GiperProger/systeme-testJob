@@ -27,3 +27,5 @@ Test job for systeme company. Senior PHP developer position
 ```
 DATABASE_URL=mysql://systeme_user:systeme_pass@db:3306/systeme?serverVersion=8.0.33
 ```
+
+9. Visit `http://localhost:8000/`

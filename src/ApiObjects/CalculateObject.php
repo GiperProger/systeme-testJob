@@ -7,13 +7,14 @@ use App\Entity\CouponType;
 use App\Entity\PaymentProcessor;
 use App\Entity\Product;
 use App\Entity\Tax;
+use App\Interfaces\ApiObjects\CalculateInterface;
 use Exception;
 use InvalidArgumentException;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 
 
-class CalculateObject
+class CalculateObject implements CalculateInterface
 {
     /** @var Product|null  */
     private ?Product $product;
@@ -147,14 +148,13 @@ class CalculateObject
         $metadata->addPropertyConstraint('tax', new NotBlank([], "Tax number is incorrect. Please check it and try again"));
         $metadata->addPropertyConstraint('product', new NotBlank([], "The product you are tryuing to buy was not found."));
         $metadata->addPropertyConstraint('paymentProcessor', new NotBlank([], "Payment processor was not found."));
-
     }
 
     /**
-     * @param $price
-     * @return int
+     * @param float $price
+     * @return float
      */
-    private function checkDiscount($price): int
+    public function checkDiscount(float $price): float
     {
         if ($this->coupon === null) {
             return $price;
