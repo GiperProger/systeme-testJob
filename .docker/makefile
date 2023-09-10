@@ -1,4 +1,4 @@
-test:
+start:
 	docker compose up -d
 	docker exec systeme_test_job-php-1 composer install
 	docker exec systeme_test_job-php-1 php bin/console doctrine:migrations:migrate
