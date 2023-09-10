@@ -52,4 +52,17 @@ class PaymentHashRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    public function create($hash, $productEntity, $totalPrice, $paymentProcessorEntity): PaymentHash
+    {
+        $paymentHashEntity = new PaymentHash();
+        $paymentHashEntity->setHash($hash);
+        $paymentHashEntity->setProduct($productEntity);
+        $paymentHashEntity->setTotalPrice($totalPrice);
+        $paymentHashEntity->setPaymentProcessor($paymentProcessorEntity);
+
+        $this->save($paymentHashEntity, true);
+
+        return $paymentHashEntity;
+    }
 }

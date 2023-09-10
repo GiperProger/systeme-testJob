@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Tax;
+use App\Service\TaxFormatConverter;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\ORM\Query;
@@ -57,12 +58,14 @@ class TaxRepository extends ServiceEntityRepository
         return $formatsSimple;
     }
 
-    public function findByTemplate($template): ?Tax
+    public function findByTemplate($taxNumber, TaxFormatConverter $taxFormatConverter): ?Tax
     {
-          return $this->createQueryBuilder('t')
+        $taxTemplate = $taxFormatConverter->convertRealTaxToTemplate($taxNumber);
+
+        return $this->createQueryBuilder('t')
             ->select('t')
             ->andWhere('t.format = :format')
-            ->setParameter('format', $template)
+            ->setParameter('format', $taxTemplate)
             ->getQuery()
             ->getOneOrNullResult();
     }

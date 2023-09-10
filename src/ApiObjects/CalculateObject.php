@@ -10,10 +10,15 @@ use App\Entity\Tax;
 use App\Interfaces\ApiObjects\CalculateInterface;
 use Exception;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 
+/**
+ *
+ */
 class CalculateObject implements CalculateInterface
 {
     /** @var Product|null  */
@@ -171,6 +176,35 @@ class CalculateObject implements CalculateInterface
         }
 
         throw new InvalidArgumentException("Invalid coupon type");
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function init(
+        $productEntity,
+        $couponEntity,
+        $taxEntity,
+        $paymentProcessorEntity,
+        ValidatorInterface $validator): static
+    {
+        $this->setProduct($productEntity);
+        $this->setCoupon($couponEntity);
+        $this->setTax($taxEntity);
+        $this->setPaymentProcessor($paymentProcessorEntity);
+
+        $errors = $validator->validate($this);
+
+        if (count($errors) > 0) {
+            $messages = [];
+            foreach ($errors as $violation) {
+                $messages[] = $violation->getMessage();
+            }
+
+            throw new Exception(implode(',', $messages));
+        }
+
+        return $this;
     }
 
 }

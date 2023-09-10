@@ -4,6 +4,8 @@ namespace App\ApiObjects;
 
 use App\Entity\PaymentHash;
 use App\Interfaces\ApiObjects\PayInterface;
+use Exception;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -86,5 +88,27 @@ class PayObject implements PayInterface
 
         $metadata->addConstraint(new Assert\Callback ($callback));
 
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function init($paymentHashEntity, $userPrice, $validator): static
+    {
+        $this->setPaymentHash($paymentHashEntity);
+        $this->setUserPrice($userPrice);
+
+        $errors = $validator->validate($this);
+
+        if (count($errors) > 0) {
+            $messages = [];
+            foreach ($errors as $violation) {
+                $messages[] = $violation->getMessage();
+            }
+
+            throw new Exception(implode(',', $messages));
+        }
+
+        return $this;
     }
 }

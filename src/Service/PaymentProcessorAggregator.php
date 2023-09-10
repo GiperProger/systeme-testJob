@@ -9,6 +9,9 @@ use InvalidArgumentException;
 
 class PaymentProcessorAggregator
 {
+    /**
+     * @throws Exception
+     */
     public static function pay($price, $paymentProcessorClassName): bool
     {
         switch($paymentProcessorClassName)
@@ -19,13 +22,15 @@ class PaymentProcessorAggregator
                      $paypalPaymentProcessor->pay($price);
                      return true;
                 }catch(Exception $e){
-                    return false;
+                    throw new Exception('Unable to pay. The sum out of the limits for selected payment processor. Try to use another payment processor.');
                 }
-                break;
             case 'StripePaymentProcessor':
                 $stripePaymentProcessor = new StripePaymentProcessor();
-                return $stripePaymentProcessor->processPayment($price);
-                break;
+                $paymentResult =  $stripePaymentProcessor->processPayment($price);
+                if(!$paymentResult){
+                    throw new Exception('Unable to pay. The sum is too small for selected payment processor. Try to use another payment processor.');
+                }
+                return true;
             default:
                 throw new InvalidArgumentException('Payment processor was not found');
         }

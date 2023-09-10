@@ -36,64 +36,43 @@ class ApiController extends AbstractController
     {
 
         $postParams = json_decode($request->getContent(), true);
-
         $productEntity = $entityManager->getRepository(Product::class)->find($postParams['product'] ?? null);
-        $couponEntity = $entityManager->getRepository(Coupon::class)->findByCode($postParams['couponCode'] ?? null);
-        $paymentProcessorEntity = $entityManager->getRepository(PaymentProcessor::class)->find($postParams['paymentProcessor'] ?? null);
 
-        if ($postParams['couponCode'] && !$couponEntity) {
-            return new JsonResponse([
-                'success' => false,
-                'data' => [],
-                'error' => ['The coupon code you are trying to use is incorrect.']
-            ], 400);
+        try {
+            $couponEntity = $entityManager->getRepository(Coupon::class)->findByCode($postParams['couponCode'] ?? 1234);
+        } catch (Exception $e) {
+            return new JsonResponse(['success' => false, 'data' => [], 'error' => [$e->getMessage()]], 400);
         }
 
-        $taxTemplate = $taxFormatConverter->convertRealTaxToTemplate($postParams['taxNumber'] ?? null);
-        $taxEntity = $entityManager->getRepository(Tax::class)->findByTemplate($taxTemplate);
+        $paymentProcessorEntity = $entityManager->getRepository(PaymentProcessor::class)->find($postParams['paymentProcessor'] ?? null);
 
-        $calculateObj->setProduct($productEntity);
-        $calculateObj->setCoupon($couponEntity);
-        $calculateObj->setTax($taxEntity);
-        $calculateObj->setPaymentProcessor($paymentProcessorEntity);
+        $taxEntity = $entityManager->getRepository(Tax::class)->findByTemplate(
+            $postParams['taxNumber'] ?? null,
+                      $taxFormatConverter
+        );
 
-        $errors = $this->validator->validate($calculateObj);
-
-        if (count($errors) > 0) {
-            $messages = [];
-            foreach ($errors as $violation) {
-                $messages[] = $violation->getMessage();
-            }
-            return new JsonResponse([
-                'success' => false,
-                'data' => [],
-                'error' => $messages
-            ], 400);
+        try {
+            $calculateObj->init($productEntity, $couponEntity, $taxEntity, $paymentProcessorEntity, $this->validator);
+        } catch (Exception $e) {
+            return new JsonResponse(['success' => false, 'data' => [], 'error' => [$e->getMessage()]], 400);
         }
 
         try {
             $paymentData = $calculateObj->getPaymentData();
         } catch (Exception $e) {
-            return new JsonResponse([
-                'success' => false,
-                'data' => [],
-                'error' => [$e->getMessage()]
-            ], 400);
+            return new JsonResponse(['success' => false, 'data' => [], 'error' => [$e->getMessage()]], 400);
         }
 
-        $paymentHashEntity = new PaymentHash();
-        $paymentHashEntity->setHash($paymentData['hash']);
-        $paymentHashEntity->setProduct($productEntity);
-        $paymentHashEntity->setTotalPrice($paymentData['totalPrice']);
-        $paymentHashEntity->setPaymentProcessor($paymentProcessorEntity);
+        $entityManager->getRepository(PaymentHash::class)->create(
+            $paymentData['hash'],
+            $productEntity,
+            $paymentData['totalPrice'],
+            $paymentProcessorEntity
+        );
 
-        $entityManager->getRepository(PaymentHash::class)->save($paymentHashEntity, true);
+        $responseData = ['hash' => $paymentData['hash'], 'totalPrice' => $paymentData['totalPrice']];
 
-        return new JsonResponse([
-            'success' => true,
-            'data' => ['hash' => $paymentData['hash'], 'totalPrice' => $paymentData['totalPrice']],
-            'error' => []],
-            200);
+        return new JsonResponse(['success' => true, 'data' => $responseData, 'error' => []], 200);
     }
 
     #[Route(path: '/api/pay', name: 'pay', methods: ['POST'])]
@@ -104,42 +83,24 @@ class ApiController extends AbstractController
         PayObject                  $payObj ): Response
     {
         $postParams = json_decode($request->getContent(), true);
-
         $paymentHash = $postParams['hash'];
         $userPrice = $postParams['userPrice'];
 
         $paymentHashEntity = $entityManager->getRepository(PaymentHash::class)->findByHash($paymentHash);
 
-        $payObj->setPaymentHash($paymentHashEntity);
-        $payObj->setUserPrice($userPrice);
-
-        $errors = $this->validator->validate($payObj);
-
-        if (count($errors) > 0) {
-            $entityManager->getRepository(PaymentHash::class)->remove($paymentHashEntity, true);
-            $messages = [];
-            foreach ($errors as $violation) {
-                $messages[] = $violation->getMessage();
-            }
-            return new JsonResponse([
-                'success' => false,
-                'data' => [],
-                'error' => $messages
-            ], 400);
+        try {
+            $payObj->init($paymentHashEntity, $userPrice, $this->validator);
+        } catch (Exception $e) {
+            return new JsonResponse(['success' => false, 'data' => [], 'error' => $e->getMessage()], 400);
         }
 
-        $paymentResult = $paymentProcessorAggregator->pay(
-            $paymentHashEntity->getTotalPrice(),
-            $paymentHashEntity->getPaymentProcessor()->getName()
-        );
-
-        if ($paymentResult === false) {
-            $entityManager->getRepository(PaymentHash::class)->remove($paymentHashEntity, true);
-            return new JsonResponse([
-                'success' => false,
-                'data' => [],
-                'error' => ['Unable to pay. The sum out of the limits for selected payment processor. Try to use another payment processor.']
-            ], 400);
+        try {
+            $paymentProcessorAggregator->pay(
+                $paymentHashEntity->getTotalPrice(),
+                $paymentHashEntity->getPaymentProcessor()->getName()
+            );
+        } catch (Exception $e) {
+            return new JsonResponse(['success' => false, 'data' => [], 'error' => [$e->getMessage()]], 400);
         }
 
         $entityManager->getRepository(PaymentHash::class)->remove($paymentHashEntity, true);

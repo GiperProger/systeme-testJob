@@ -4,7 +4,9 @@ namespace App\Repository;
 
 use App\Entity\Coupon;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\Persistence\ManagerRegistry;
+use Exception;
 
 /**
  * @extends ServiceEntityRepository<Coupon>
@@ -21,14 +23,31 @@ class CouponRepository extends ServiceEntityRepository
         parent::__construct($registry, Coupon::class);
     }
 
+
+    /**
+     * @throws NonUniqueResultException
+     * @throws Exception
+     */
     public function findByCode($code): ?Coupon
     {
-          return $this->createQueryBuilder('c')
+        if($code === null || strlen($code) === 0){
+            return null;
+        }
+
+        $couponEntity = $this->createQueryBuilder('c')
             ->select('c')
             ->andWhere('c.code = :code')
             ->setParameter('code', $code)
             ->getQuery()
             ->getOneOrNullResult();
+
+        if(!$couponEntity){
+            throw new Exception('The coupon you are trying to use is incorrect');
+        }
+
+        return $couponEntity;
+
+
     }
 
 //    /**
